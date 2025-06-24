@@ -1,7 +1,8 @@
   import React, { useState, useEffect, useCallback } from 'react';
-  import { Table, Select, Space, Pagination } from 'antd';
-  import { getAllFilms } from '../../api/films';
+  import { Table, Select, Space, Pagination, Input } from 'antd';
+  import { getAllFilms, getFilterDetails } from '../../api/films';
   import SideModal from '../../components/FilmComponents/SideModal';
+
 
   const { Option } = Select;
 
@@ -9,12 +10,29 @@
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalRecords, setTotalRecords] = useState(0);
-    const [orderBy, setOrderBy] = useState('replacement_cost');
+    const [orderBy, setOrderBy] = useState('title');
     const [orderType, setOrderType] = useState('asc');
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedFilmId, setSelectedFilmId] = useState<number>(0);
+    const [filterOptions, setFilterOptions] = useState({
+      categories: [],
+      languages: [],
+      actors: [],
+      years: [],
+      lengths: []
+    });
+    const [filters, setFilters] = useState({
+      category: '',
+      language: '',
+      release_year: '',
+      length: {
+        type: '',
+        value: ''
+      },
+      actor: ''
+    });
 
     const columns = [
       {
@@ -53,10 +71,16 @@
       setLoading(true);
       try {
         const params = {
-          limit: pageSize,
+          pageSize,
           orderBy,
           orderType,
           pageNo: currentPage,
+          filtersCategory: filters.category,
+          filtersLanguage: filters.language,
+          filtersRelease_year: filters.release_year,
+          filtersLength_type: filters.length.type,
+          filtersLength_value: filters.length.value,
+          filtersActor: filters.actor,
         };
         const response = await getAllFilms(params);
         console.log(response.total);
@@ -66,11 +90,30 @@
         console.error('Error fetching data:', error);
       }
       setLoading(false);
-    }, [pageSize, orderBy, orderType, currentPage]);
+    }, [pageSize, orderBy, orderType, currentPage, filters]);
+
+    const fetchFilterDetails = useCallback(async () => {
+      try {
+        const response = await getFilterDetails();
+        setFilterOptions({
+          categories: response.categories,
+          languages: response.languages,
+          actors: response.actors,
+          years: response.years,
+          lengths: response.lengths
+        });
+      } catch (error) {
+        console.error('Error fetching filter details:', error);
+      }
+    }, []);
+
+    useEffect(() => {
+      fetchFilterDetails();
+    }, [fetchFilterDetails]);
 
     useEffect(() => {
       fetchData();
-    }, [orderBy, orderType, currentPage, fetchData]);
+    }, [orderBy, orderType, currentPage, filters, fetchData]);
 
     const handleSortByChange = (value: string) => {
       setOrderBy(value);
@@ -87,6 +130,14 @@
       setCurrentPage(1);
     };
 
+    const handleFilterChange = (type: string, value: string | { type: string; value: string }) => {
+      setFilters(prev => ({
+        ...prev,
+        [type]: value
+      }));
+      setCurrentPage(1);
+    };
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleRowClick = (record: any) => {
       console.log(record.film_id);
@@ -96,30 +147,115 @@
 
     return (
       <div style={{ padding: '24px', marginRight: isModalOpen ? '600px' : '0', transition: 'margin-right 0.3s' }}>
-        <Space style={{ marginBottom: '16px' }} size="large">
-          <span>Sort by:</span>
+        <Space style={{ marginBottom: '16px' }} size="large" wrap>
+          <Space>
+            <span>Category:</span>
+            <Select
+              value={filters.category}
+              style={{ width: 160 }}
+              onChange={(value) => handleFilterChange('category', value)}
+            >
+              <Option value="">No Filter</Option>
+              {filterOptions.categories.map((category: { name: string }) => (
+                <Option key={category.name} value={category.name.toLowerCase()}>{category.name}</Option>
+              ))}
+            </Select>
+          </Space>
+
+          <Space>
+            <span>Language:</span>
+            <Select
+              value={filters.language}
+              style={{ width: 160 }}
+              onChange={(value) => handleFilterChange('language', value)}
+            >
+              <Option value="">No Filter</Option>
+              {filterOptions.languages.map((language: { name: string }) => (
+                <Option key={language.name} value={language.name.toLowerCase()}>{language.name}</Option>
+              ))}
+            </Select>
+          </Space>
+
+          <Space>
+            <span>Release Year:</span>
+            <Select
+              value={filters.release_year}
+              style={{ width: 160 }}
+              onChange={(value) => handleFilterChange('release_year', value)}
+            >
+              <Option value="">No Filter</Option>
+            {filterOptions.years.map((year: { release_year: string }) => (
+                <Option key={year.release_year} value={year.release_year}>{year.release_year}</Option>
+              ))}
+            </Select>
+          </Space>
+
+          <Space>
+            <span>Length:</span>
+            <Select
+              value={filters.length.type}
+              style={{ width: 120 }}
+              onChange={(value) => handleFilterChange('length', { ...filters.length, type: value })}
+            >
+              <Option value="">No Filter</Option>
+              <Option value="gt">Greater Than</Option>
+              <Option value="lt">Less Than</Option>
+            </Select>
+            {filters.length.type && (
+              <Input
+                style={{ width: 100 }}
+                value={filters.length.value}
+                onChange={(e) => handleFilterChange('length', { ...filters.length, value: e.target.value })}
+                placeholder="Minutes"
+              />
+            )}
+          </Space>
+
+          <Space>
+            <span>Actor:</span>
+            <Select
+              value={filters.actor}
+              style={{ width: 160 }}
+              onChange={(value) => handleFilterChange('actor', value)}
+            >
+              <Option value="">No Filter</Option>
+              {filterOptions.actors.map((actor: { first_name: string; last_name: string }) => (
+                <Option key={`${actor.first_name} ${actor.last_name}`} value={`${actor.first_name} ${actor.last_name}`}>
+                  {`${actor.first_name} ${actor.last_name}`}
+                </Option>
+              ))}
+            </Select>
+          </Space>
+
+          <Space>
+            <span>Sort by:</span>
+            <Select
+              value={orderBy}
+              style={{ width: 160 }}
+              onChange={handleSortByChange}
+            >
+              <Option value="title">Title</Option>
+              <Option value="release_year">Release Year</Option>
+              <Option value="length">Length</Option>
+              <Option value="replacement_cost">Replacement Cost</Option>
+              <Option value="rating">Rating</Option>
+            </Select>
+          </Space>
+
+          <Space>
+            <span>Order:</span>
+            <Select
+              value={orderType}
+              style={{ width: 120 }}
+              onChange={handleSortTypeChange}
+            >
+              <Option value="asc">Ascending</Option>
+              <Option value="desc">Descending</Option>
+            </Select>
+          </Space>
+
           <Select
-            defaultValue={orderBy}
-            style={{ width: 160 }}
-            onChange={handleSortByChange}
-          >
-            <Option value="title">Title</Option>
-            <Option value="release_year">Release Year</Option>
-            <Option value="length">Length</Option>
-            <Option value="replacement_cost">Replacement Cost</Option>
-            <Option value="rating">Rating</Option>
-          </Select>
-          <span>Order:</span>
-          <Select
-            defaultValue={orderType}
-            style={{ width: 120 }}
-            onChange={handleSortTypeChange}
-          >
-            <Option value="asc">Ascending</Option>
-            <Option value="desc">Descending</Option>
-          </Select>
-          <Select
-            defaultValue={pageSize}
+            value={pageSize}
             style={{ width: 120 }}
             onChange={handlePageSizeChange}
           >

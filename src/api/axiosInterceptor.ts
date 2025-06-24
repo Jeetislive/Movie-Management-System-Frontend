@@ -1,8 +1,10 @@
 import axios from "axios";
 import { getCookie, setCookie } from "../utils/cookieUtil";
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  // console.log(backendUrl);
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000", // Replace with your backend
+  baseURL: backendUrl, // Replace with your backend
   withCredentials: true, // Send cookies (refresh token, etc.)
 });
 

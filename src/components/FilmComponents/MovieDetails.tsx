@@ -8,6 +8,7 @@
   }
 
   interface MovieData {
+    film_category: [{ category: { name: string } }];
     title: string;
     description: string;
     release_year: number;
@@ -77,6 +78,10 @@
             <p className="flex items-center">
               <span className="font-semibold text-gray-700 min-w-[140px]">Language:</span>
               <span className="text-gray-600">{movieData.language_film_language_idTolanguage.name}</span>
+            </p>
+            <p className="flex items-center">
+              <span className="font-semibold text-gray-700 min-w-[140px]">Category:</span>
+              <span className="text-gray-600">{movieData.film_category[0].category.name}</span>
             </p>
           </div>
         </div>
