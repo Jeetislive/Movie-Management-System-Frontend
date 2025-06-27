@@ -1,5 +1,6 @@
   import { useState, useEffect } from 'react';
   import { getMovieActorDetails } from '../../api/films';
+import { Table } from 'antd';
 
   interface ActorDetailsProps {
     filmId: string;
@@ -40,12 +41,32 @@
     return loading ? (
       <div className="p-4">Loading...</div>
     ) : (
-      <div className="p-4 space-y-4">
-        {actors.map((actorData) => (
-          <div key={actorData.actor.actor_id} className="p-2 border rounded">
-            <h3 className="font-semibold">{`${actorData.actor.first_name} ${actorData.actor.last_name}`}</h3>
-          </div>
-        ))}
-      </div>
-    );
+            <Table
+              dataSource={actors}
+              columns={[
+                {
+                  title: 'Actor ID',
+                  dataIndex: ['actor', 'actor_id'],
+                  key: 'actor_id',
+                },
+                {
+                  title: 'First Name',
+                  dataIndex: ['actor', 'first_name'],
+                  key: 'first_name',
+                },
+                {
+                  title: 'Last Name',
+                  dataIndex: ['actor', 'last_name'],
+                  key: 'last_name',
+                },
+              ]}
+              rowKey={(record) => record.actor.actor_id}
+              pagination={{
+                total: actors.length,
+                pageSize: 5,
+              }}
+              className="p-4"
+            />
+      
+        );
   };

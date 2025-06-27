@@ -24,14 +24,14 @@
       lengths: []
     });
     const [filters, setFilters] = useState({
-      category: '',
-      language: '',
-      release_year: '',
+      category: [],
+      language: [],
+      release_year: [],
       length: {
         type: '',
         value: ''
       },
-      actor: ''
+      actor: []
     });
 
     const columns = [
@@ -75,12 +75,12 @@
           orderBy,
           orderType,
           pageNo: currentPage,
-          filtersCategory: filters.category,
-          filtersLanguage: filters.language,
-          filtersRelease_year: filters.release_year,
+          filtersCategory: filters.category.join(','),
+          filtersLanguage: filters.language.join(','),
+          filtersRelease_year: filters.release_year.join(','),
           filtersLength_type: filters.length.type,
           filtersLength_value: filters.length.value,
-          filtersActor: filters.actor,
+          filtersActor: filters.actor.join(','),
         };
         const response = await getAllFilms(params);
         console.log(response.total);
@@ -130,7 +130,7 @@
       setCurrentPage(1);
     };
 
-    const handleFilterChange = (type: string, value: string | { type: string; value: string }) => {
+    const handleFilterChange = (type: string, value: string[] | { type: string; value: string }) => {
       setFilters(prev => ({
         ...prev,
         [type]: value
@@ -151,11 +151,11 @@
           <Space>
             <span>Category:</span>
             <Select
+              mode="multiple"
               value={filters.category}
               style={{ width: 160 }}
               onChange={(value) => handleFilterChange('category', value)}
             >
-              <Option value="">No Filter</Option>
               {filterOptions.categories.map((category: { name: string }) => (
                 <Option key={category.name} value={category.name.toLowerCase()}>{category.name}</Option>
               ))}
@@ -165,11 +165,11 @@
           <Space>
             <span>Language:</span>
             <Select
+              mode="multiple"
               value={filters.language}
               style={{ width: 160 }}
               onChange={(value) => handleFilterChange('language', value)}
             >
-              <Option value="">No Filter</Option>
               {filterOptions.languages.map((language: { name: string }) => (
                 <Option key={language.name} value={language.name.toLowerCase()}>{language.name}</Option>
               ))}
@@ -179,11 +179,11 @@
           <Space>
             <span>Release Year:</span>
             <Select
+              mode="multiple"
               value={filters.release_year}
               style={{ width: 160 }}
               onChange={(value) => handleFilterChange('release_year', value)}
             >
-              <Option value="">No Filter</Option>
             {filterOptions.years.map((year: { release_year: string }) => (
                 <Option key={year.release_year} value={year.release_year}>{year.release_year}</Option>
               ))}
@@ -214,11 +214,11 @@
           <Space>
             <span>Actor:</span>
             <Select
+              mode="multiple"
               value={filters.actor}
               style={{ width: 160 }}
               onChange={(value) => handleFilterChange('actor', value)}
             >
-              <Option value="">No Filter</Option>
               {filterOptions.actors.map((actor: { first_name: string; last_name: string }) => (
                 <Option key={`${actor.first_name} ${actor.last_name}`} value={`${actor.first_name} ${actor.last_name}`}>
                   {`${actor.first_name} ${actor.last_name}`}
@@ -282,6 +282,7 @@
           current={currentPage}
           total={totalRecords}
           pageSize={pageSize}
+          showSizeChanger={false}
           onChange={(page) => setCurrentPage(page)}
           style={{ marginTop: '16px', textAlign: 'right' }}
         />
